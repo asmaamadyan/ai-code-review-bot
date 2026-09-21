@@ -8,7 +8,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage",
-    "review:local": "tsx src/runReview.ts"
+    "review:local": "tsx src/runReview.ts",
+    "review:ci": "tsx src/runReview.ts"
   },
   "repository": {
     "type": "git",

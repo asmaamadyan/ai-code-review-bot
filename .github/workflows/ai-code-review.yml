@@ -1,0 +1,108 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: read
+  pull-requests: write
+  copilot-requests: write
+
+concurrency:
+  group: ai-code-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    name: Review pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # Do not run repository code from untrusted fork pull requests.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run type checking
+        run: npm run typecheck
+
+      - name: Run tests with coverage
+        run: npm run coverage
+
+      - name: Install GitHub Copilot CLI
+        run: npm install --global @github/copilot@1.0.86
+
+      - name: Collect pull-request diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh pr diff "$PR_NUMBER" \
+            --repo "$REPOSITORY" \
+            > pull-request.diff
+
+      - name: Run Copilot code review
+        id: ai-review
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COPILOT_MODEL: auto
+          DIFF_PATH: pull-request.diff
+          REVIEW_OUTPUT_PATH: review.md
+        run: npm run review:ci
+
+      - name: Post or update PR comment
+        if: always() && hashFiles('review.md') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          COMMENT_ID="$(
+            gh api \
+              "repos/$REPOSITORY/issues/$PR_NUMBER/comments" \
+              --paginate \
+              --jq '.[] | select(.body | contains("<!-- ai-code-review-bot -->")) | .id' \
+              | head -n 1
+          )"
+
+          if [ -n "$COMMENT_ID" ]; then
+            gh api \
+              --method PATCH \
+              "repos/$REPOSITORY/issues/comments/$COMMENT_ID" \
+              --raw-field body="$(cat review.md)"
+          else
+            gh pr comment "$PR_NUMBER" \
+              --repo "$REPOSITORY" \
+              --body-file review.md
+          fi
+
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-code-review-evidence-${{ github.run_id }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            logs/prompt-log.jsonl
+            review.md
+            coverage/

@@ -6,3 +6,5 @@ logs/*.json
 logs/*.jsonl
 .env
 .DS_Store
+pull-request.diff
+review.md
