@@ -1,0 +1,35 @@
+{
+  "name": "ai-code-review-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "review:local": "tsx src/runReview.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/asmaamadyan/ai-code-review-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/asmaamadyan/ai-code-review-bot/issues"
+  },
+  "homepage": "https://github.com/asmaamadyan/ai-code-review-bot#readme",
+  "type": "module",
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.2",
+    "@vitest/coverage-v8": "^5.0.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  }
+}
