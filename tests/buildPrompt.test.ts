@@ -1,72 +1,23 @@
 import { describe, expect, it } from 'vitest';
 
-import { selectRelevantStandards } from '../src/buildPrompt';
+import { buildReviewPrompt } from '../src/buildPrompt';
 
-const standards = `
-# Code Review Engineering Standards
-
-## Review principles
-
-General review rules.
-
-## Standards for all languages
-
-Universal rules.
-
-## TypeScript
-
-TypeScript rules.
-
-## React
-
-React accessibility rules.
-
-## Python
-
-Python rules.
-
-## Java
-
-Java rules.
-
-## Severity definitions
-
-Severity rules.
-`;
-
-describe('selectRelevantStandards', () => {
-  it('includes general and detected language standards', () => {
-    const result = selectRelevantStandards(
-      standards,
-      ['TypeScript', 'Python'],
-      ['src/App.ts', 'server/report.py'],
+describe('buildReviewPrompt', () => {
+  it('asks Copilot to identify languages without predefined standards', async () => {
+    const result = await buildReviewPrompt(
+      'diff --git a/src/App.tsx b/src/App.tsx\n+const value = 1;',
     );
 
-    expect(result).toContain('General review rules.');
-    expect(result).toContain('Universal rules.');
-    expect(result).toContain('TypeScript rules.');
-    expect(result).toContain('Python rules.');
-    expect(result).toContain('Severity rules.');
-    expect(result).not.toContain('Java rules.');
+    expect(result).toContain('Identify the programming language');
+    expect(result).toContain('Do not restrict language detection');
+    expect(result).toContain('src/App.tsx');
+    expect(result).not.toContain('engineering_standards');
+    expect(result).not.toContain('Detected languages:');
   });
 
-  it('includes React standards for TSX files', () => {
-    const result = selectRelevantStandards(
-      standards,
-      ['TypeScript'],
-      ['src/App.tsx'],
+  it('rejects an empty diff', async () => {
+    await expect(buildReviewPrompt('')).rejects.toThrow(
+      'The pull-request diff is empty.',
     );
-
-    expect(result).toContain('React accessibility rules.');
-  });
-
-  it('does not include React standards for ordinary TypeScript files', () => {
-    const result = selectRelevantStandards(
-      standards,
-      ['TypeScript'],
-      ['src/helper.ts'],
-    );
-
-    expect(result).not.toContain('React accessibility rules.');
   });
 });
