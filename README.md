@@ -48,16 +48,73 @@ npm run review:local
 The generated comment is written to `review.md`. Paths and the model can be
 overridden with `DIFF_PATH`, `REVIEW_OUTPUT_PATH`, and `COPILOT_MODEL`.
 
+## Language detection demonstration
+
+[examples/](examples) contains intentionally flawed files in five languages,
+and [examples/diffs/multi-language.diff](examples/diffs/multi-language.diff) is
+a ready-made diff covering all of them:
+
+| Example file | Language |
+| --- | --- |
+| [examples/DemoComponent.tsx](examples/DemoComponent.tsx) | TypeScript / React |
+| [examples/report.py](examples/report.py) | Python |
+| [examples/OrderService.java](examples/OrderService.java) | Java |
+| [examples/inventory.go](examples/inventory.go) | Go |
+| [examples/schema.sql](examples/schema.sql) | SQL |
+
+Run a full review against that diff:
+
+```sh
+DIFF_PATH=examples/diffs/multi-language.diff npm run review:local
+```
+
+Expected behavior: all five paths are listed under `Changed files:` in the
+prompt, and Copilot reports the language it detected for each finding in
+`review.md`, without a predefined language list.
+
+Regenerate the diff after changing an example file:
+
+```sh
+: > examples/diffs/multi-language.diff
+for file in examples/DemoComponent.tsx examples/report.py \
+  examples/OrderService.java examples/inventory.go examples/schema.sql; do
+  git diff --no-index -- /dev/null "$file" >> examples/diffs/multi-language.diff
+done
+```
+
+[examples/diffs/no-file-headers.diff](examples/diffs/no-file-headers.diff)
+covers the detection edge case where a diff has hunks but no
+`diff --git` headers, so no changed file is detected and the prompt lists no
+files.
+
 ## Production error handling demonstration
 
-This command intentionally exercises the input failure path without calling
-Copilot:
+These commands intentionally exercise the input failure paths without a
+successful Copilot call:
 
 ```sh
 DIFF_PATH=/tmp/missing-pull-request.diff npm run review:local
+DIFF_PATH=examples/diffs/empty.diff npm run review:local
 ```
 
-Expected behavior:
+Expected error messages on standard error:
+
+| Demo input | Error message |
+| --- | --- |
+| Missing diff file | `AI code review failed: ENOENT: no such file or directory, open '…'` |
+| [examples/diffs/empty.diff](examples/diffs/empty.diff) (whitespace only) | `AI code review failed: The pull-request diff is empty.` |
+| Diff larger than 200000 characters | `AI code review failed: The pull-request diff exceeds 200000 characters.` |
+| Copilot CLI not authenticated or missing | `AI code review failed: …` with the Copilot CLI error text |
+
+Build the oversized-diff input with:
+
+```sh
+{ printf 'diff --git a/examples/huge.ts b/examples/huge.ts\n+'; \
+  head -c 200001 /dev/zero | tr '\0' 'x'; printf '\n'; } > /tmp/oversized.diff
+DIFF_PATH=/tmp/oversized.diff npm run review:local
+```
+
+In every case:
 
 - the command exits with status `1`;
 - `review.md` is still created with the automated-review failure comment;
