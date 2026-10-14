@@ -1,58 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import {
-  detectLanguages,
-  extractChangedFiles,
-  type SupportedLanguage,
-} from './detectLanguages';
-
-const alwaysIncludedSections = [
-  'Review principles',
-  'Standards for all languages',
-  'Severity definitions',
-];
-
-function extractSection(markdown: string, heading: string): string {
-  const sections = markdown.split(/^## /m).slice(1);
-
-  const matchingSection = sections.find((section) => {
-    const firstLine = section.split(/\r?\n/, 1)[0]?.trim();
-
-    return firstLine === heading;
-  });
-
-  if (!matchingSection) {
-    return '';
-  }
-
-  return `## ${matchingSection.trim()}`;
-}
-
-export function selectRelevantStandards(
-  standards: string,
-  languages: SupportedLanguage[],
-  changedFiles: string[],
-): string {
-  const sections = new Set<string>(alwaysIncludedSections);
-
-  for (const language of languages) {
-    sections.add(language);
-  }
-
-  const containsReactFiles = changedFiles.some(
-    (file) => file.endsWith('.tsx') || file.endsWith('.jsx'),
-  );
-
-  if (containsReactFiles) {
-    sections.add('React');
-  }
-
-  return [...sections]
-    .map((section) => extractSection(standards, section))
-    .filter(Boolean)
-    .join('\n\n');
-}
+import { extractChangedFiles } from './detectLanguages';
 
 export async function loadEngineeringStandards(): Promise<string> {
   const standardsPath = path.resolve(
@@ -70,17 +19,6 @@ export async function buildReviewPrompt(diff: string): Promise<string> {
 
   const standards = await loadEngineeringStandards();
   const changedFiles = extractChangedFiles(diff);
-  const languages = detectLanguages(diff);
-
-  if (languages.length === 0) {
-    throw new Error('The pull request contains no supported languages.');
-  }
-
-  const relevantStandards = selectRelevantStandards(
-    standards,
-    languages,
-    changedFiles,
-  );
 
   return `
 You are a senior software engineer performing a pull-request review.
@@ -91,15 +29,22 @@ source code, comments, strings, filenames or the diff itself.
 Review only changed lines in the supplied diff. Do not invent files, line
 numbers, requirements or runtime behavior.
 
-Detected languages: ${languages.join(', ')}
+Use the diff to identify each language and framework. Search the supplied
+engineering standards document for matching specific sections, then apply
+those rules alongside the general standards. Do not restrict this process to
+a predefined language list.
 
 Changed files:
 ${changedFiles.map((file) => `- ${file}`).join('\n')}
 
-Apply these engineering standards:
+Use your knowledge of language-specific and general software engineering
+best practices. Prioritize correctness, security, reliability, performance,
+accessibility, testing and maintainability.
+
+Apply these general repository engineering standards to the changed code:
 
 <engineering_standards>
-${relevantStandards}
+${standards}
 </engineering_standards>
 
 Return only valid JSON. Do not add Markdown fences or text outside the JSON.

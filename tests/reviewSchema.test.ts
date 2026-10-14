@@ -9,7 +9,7 @@ const validReview = {
     {
       severity: 'medium',
       category: 'performance',
-      language: 'TypeScript',
+      language: 'Ruby',
       file: 'src/App.tsx',
       line: 12,
       title: 'Expensive calculation during render',

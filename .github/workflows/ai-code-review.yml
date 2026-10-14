@@ -69,8 +69,25 @@ jobs:
           REVIEW_OUTPUT_PATH: review.md
         run: npm run review:ci
 
+      - name: Create workflow failure comment when review is unavailable
+        if: always() && hashFiles('review.md') == ''
+        run: |
+          cat > review.md <<EOF
+          <!-- ai-code-review-bot -->
+
+          ## 🤖 AI Code Review
+
+          🚨 **The automated review workflow failed before a review could be generated.**
+
+          Check the failed step in the [GitHub Actions run](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}) for the exact error. The pull-request code has not been changed.
+
+          ---
+
+          <sub>AI feedback is supplementary and does not replace human review.</sub>
+          EOF
+
       - name: Post or update PR comment
-        if: always() && hashFiles('review.md') != ''
+        if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}

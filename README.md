@@ -14,8 +14,13 @@ pull-request comment.
 - CI uploads `logs/prompt-log.jsonl`, `review.md`, and `coverage/` as the
   `ai-code-review-evidence-<run-id>` artifact.
 - Copilot output is parsed and validated with Zod before it can be posted.
-- Failed reviews produce a safe fallback comment, write a non-zero exit code,
-  and remain visible in the workflow logs and evidence artifact.
+- Copilot identifies the programming languages from the changed code without a
+  predefined language list, then applies the general repository engineering
+  standards.
+- Review failures produce a safe fallback comment, and failures before review
+  generation produce a prominent comment linking directly to the failed
+  workflow run. Errors remain visible in the workflow logs and evidence
+  artifact.
 
 ## Local development
 

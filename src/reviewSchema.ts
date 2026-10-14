@@ -11,7 +11,7 @@ export const findingSchema = z.object({
     'maintainability',
     'reliability',
   ]),
-  language: z.enum(['TypeScript', 'JavaScript', 'Python', 'Java', 'C#']),
+  language: z.string().min(1),
   file: z.string().min(1),
   line: z.number().int().positive().nullable(),
   title: z.string().min(1),
