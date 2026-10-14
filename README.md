@@ -16,8 +16,6 @@ pull-request comment.
 - Copilot output is parsed and validated with Zod before it can be posted.
 - Failed reviews produce a safe fallback comment, write a non-zero exit code,
   and remain visible in the workflow logs and evidence artifact.
-- The component-level verification matrix is in
-  [docs/verification-checklist.md](docs/verification-checklist.md).
 
 ## Local development
 
