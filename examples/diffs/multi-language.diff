@@ -1,0 +1,162 @@
+diff --git a/examples/DemoComponent.tsx b/examples/DemoComponent.tsx
+new file mode 100644
+index 0000000..1b2557f
+--- /dev/null
++++ b/examples/DemoComponent.tsx
+@@ -0,0 +1,34 @@
++// @ts-ignore React may be provided by the consuming app without local type declarations.
++import { useEffect, useState } from 'react';
++
++type DemoComponentProps = {
++  users: any[];
++};
++
++export function DemoComponent({ users }: DemoComponentProps) {
++  const [query, setQuery] = useState('');
++
++  useEffect(() => {
++    setInterval(() => {
++      console.log('Refreshing users');
++    }, 1000);
++  }, []);
++
++  const filteredUsers = users.filter((user) =>
++    user.name.toLowerCase().includes(query.toLowerCase()),
++  );
++
++  return (
++    
++      <h1>Users</h1>
++
++      <input value={query} onChange={(event) => setQuery(event.target.value)} />
++
++      {filteredUsers.map((user, index) => (
++        <div key={index} onClick={() => alert(user.email)}>
++          {user.name}
++        </div>
++      ))}
++  
++  );
++}
+diff --git a/examples/report.py b/examples/report.py
+new file mode 100644
+index 0000000..3a4967c
+--- /dev/null
++++ b/examples/report.py
+@@ -0,0 +1,11 @@
++def add_report(report, reports=[]):
++    reports.append(report)
++    return reports
++
++
++def read_report(filename):
++    try:
++        file = open(filename)
++        return file.read()
++    except:
++        return None
+\ No newline at end of file
+diff --git a/examples/OrderService.java b/examples/OrderService.java
+new file mode 100644
+index 0000000..c6a5e3d
+--- /dev/null
++++ b/examples/OrderService.java
+@@ -0,0 +1,40 @@
++package com.example.orders;
++
++import java.sql.Connection;
++import java.sql.ResultSet;
++import java.sql.Statement;
++import java.util.ArrayList;
++import java.util.List;
++
++public class OrderService {
++  private Connection connection;
++
++  public OrderService(Connection connection) {
++    this.connection = connection;
++  }
++
++  public List<String> findOrdersForCustomer(String customerId) throws Exception {
++    Statement statement = connection.createStatement();
++
++    ResultSet results =
++        statement.executeQuery("SELECT reference FROM orders WHERE customer_id = '" + customerId + "'");
++
++    List<String> references = new ArrayList();
++
++    while (results.next()) {
++      references.add(results.getString("reference"));
++    }
++
++    return references;
++  }
++
++  public double totalPrice(List<Double> prices) {
++    double total = 0;
++
++    for (int index = 0; index <= prices.size(); index++) {
++      total += prices.get(index);
++    }
++
++    return total;
++  }
++}
+diff --git a/examples/inventory.go b/examples/inventory.go
+new file mode 100644
+index 0000000..55cefd7
+--- /dev/null
++++ b/examples/inventory.go
+@@ -0,0 +1,27 @@
++package inventory
++
++import (
++	"encoding/json"
++	"net/http"
++	"os"
++)
++
++var stock = map[string]int{}
++
++func LoadStock(path string) map[string]int {
++	content, _ := os.ReadFile(path)
++
++	json.Unmarshal(content, &stock)
++
++	return stock
++}
++
++func ReserveHandler(writer http.ResponseWriter, request *http.Request) {
++	item := request.URL.Query().Get("item")
++
++	go func() {
++		stock[item] = stock[item] - 1
++	}()
++
++	writer.Write([]byte("reserved " + item))
++}
+diff --git a/examples/schema.sql b/examples/schema.sql
+new file mode 100644
+index 0000000..2373f62
+--- /dev/null
++++ b/examples/schema.sql
+@@ -0,0 +1,19 @@
++CREATE TABLE customers (
++  id INT,
++  email VARCHAR(255),
++  password VARCHAR(255),
++  created_at VARCHAR(50)
++);
++
++CREATE TABLE orders (
++  id INT,
++  customer_id INT,
++  reference VARCHAR(255),
++  total FLOAT
++);
++
++SELECT *
++FROM orders o, customers c
++WHERE o.customer_id = c.id;
++
++UPDATE customers SET password = 'changeme';
