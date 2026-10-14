@@ -19,7 +19,7 @@ export function DemoComponent({ users }: DemoComponentProps) {
   );
 
   return (
-    <section>
+    
       <h1>Users</h1>
 
       <input value={query} onChange={(event) => setQuery(event.target.value)} />
@@ -29,6 +29,6 @@ export function DemoComponent({ users }: DemoComponentProps) {
           {user.name}
         </div>
       ))}
-    </section>
+  
   );
 }
